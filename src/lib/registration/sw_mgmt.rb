@@ -28,6 +28,7 @@ require "fileutils"
 
 require "registration/exceptions"
 require "registration/helpers"
+require "registration/control_file"
 
 module Registration
   Yast.import "Mode"
@@ -35,6 +36,7 @@ module Registration
   Yast.import "PackageLock"
   Yast.import "Installation"
   Yast.import "PackageCallbacks"
+  Yast.import "PackagesProposal"
 
   class SwMgmt
     include Yast
@@ -295,6 +297,35 @@ module Registration
       log.info "Found addons to update: #{ret}"
       ret
     end
+    
+    def self.preselect_patterns(control_file)
+      control = ::Registration::ControlFile.new(control_file)
+      
+      default_patterns = control.default_patterns
+      if !default_patterns.empty?
+        PackagesProposal.AddResolvables("y2_registration_patterns", :pattern,
+          default_patterns)
+      end
+
+      default_optional_patterns = control.default_optional_patterns
+      if !default_optional_patterns.empty?
+        
+        # find available pattern names
+        available_patterns = Pkg.ResolvableProperties("", :pattern, "").
+          select { |pattern| pattern["status"] == :available}.
+          map { |pattern| pattern["name"] }.
+          uniq!
+
+        # filter out not available patterns
+        default_optional_patterns.reject! { |pattern| available_patterns.include?(pattern) }
+        
+        if !default_optional_patterns.empty?
+          PackagesProposal.AddResolvables("y2_registration_optional_patterns",
+            :pattern, default_optional_patterns)
+        end
+      end
+      
+    end
 
     # a helper method for iterating over repositories
     # @param repo_aliases [Array<String>] list of repository aliases
@@ -315,7 +346,7 @@ module Registration
         end
       end
     end
-
+    
     private_class_method :each_repo
   end
 end

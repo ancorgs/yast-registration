@@ -42,6 +42,7 @@ module Registration
     Yast.import "Popup"
     Yast.import "Report"
     Yast.import "SlpService"
+    Yast.import "XML"
 
     # name of the boot parameter
     BOOT_PARAM = "reg_url"
@@ -261,6 +262,6 @@ module Registration
       attr_list = x509_name.to_a.find(Array.method(:new)) { |a| a.first == attribute }
       attr_list[1]
     end
-
+    
   end
 end
