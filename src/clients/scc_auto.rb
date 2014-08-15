@@ -47,6 +47,9 @@ module Yast
     # popup message
     CONTACTING_MESSAGE = N_("Contacting the Registration Server")
 
+    # reg. code replacement
+    FILTERED = "[FILTERED]"
+
     def main
       Yast.import "UI"
       Yast.import "Pkg"
@@ -64,7 +67,7 @@ module Yast
       func = WFM.Args[0]
       param = WFM.Args[1] || {}
 
-      log.info "func: #{func}, param: #{param}"
+      log.info "func: #{func}, param: #{hide_reg_codes(param)}"
 
       case func
       when "Summary"
@@ -99,7 +102,7 @@ module Yast
         raise "Unknown function parameter: #{func}"
       end
 
-      log.info "ret: #{ret}"
+      log.info "ret: #{hide_reg_codes(ret)}"
       log.info "scc_auto finished"
 
       ret
@@ -268,6 +271,23 @@ module Yast
     # UI workflow definition
     def start_workflow
       ::Registration::UI::AutoyastConfigWorkflow.run(@config)
+    end
+
+    # TODO: move settings to a separate class and override #to_s
+    def hide_reg_codes(settings)
+      return settings unless settings.is_a?(Hash)
+
+      # create a duplicate
+      filtered = settings.dup
+      filtered["reg_code"] = FILTERED if filtered["reg_code"]
+
+      return filtered unless filtered["addons"].is_a?(Array)
+
+      filtered["addons"].each do |addon|
+        addon["reg_code"] = FILTERED if addon["reg_code"]
+      end
+
+      filtered
     end
 
   end unless defined?(SccAutoClient)
