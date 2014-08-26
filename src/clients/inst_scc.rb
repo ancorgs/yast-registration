@@ -386,6 +386,7 @@ module Yast
 
     # run the addon selection dialog
     def select_addons
+      return :back
       get_available_addons # FIXME just to fill cache with popup
 
       # FIXME workaround to reference between old way and new storage in Addon metaclass
@@ -642,6 +643,7 @@ module Yast
         "select_addons" => {
           :abort    => :abort,
           :skip     => :next,
+          :back     => "check",
           :next     => "addon_eula"
         },
         "addon_eula" => {
